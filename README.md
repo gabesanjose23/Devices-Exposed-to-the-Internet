@@ -107,6 +107,7 @@ DeviceLogonEvents
 ### 6. Check if the location from which is being logon from is normal
 
 We checked all of the successful login IP addresses for the “labuser” account to see if any of them were unusual or from an unexpected location,All were normal.
+
 **Query used to locate events:**
 
 ```kql
@@ -123,7 +124,7 @@ DeviceLogonEvents
 
 ## Summary
 
-Though the device was exposed to the internet and clear brute force attempts have taken place, there is no evidence of any brute force success or unauthorized access from the legitimate account “labuser”
+Though the device was exposed to the internet and clear brute force attempts have taken place, there is no evidence of any brute force success or unauthorized access from the legitimate account “labuser”.
 
 MITRE ATT&CK - T1190: Exploit Public-Facing Application
 
