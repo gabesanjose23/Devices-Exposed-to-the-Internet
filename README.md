@@ -35,37 +35,40 @@ DeviceInfo
 
 ---
 
-### 2. Find out how many people attempted to login into the machine
+### 2. Find out if anyone has attempted to login into the machine
 
-Searched for any `ProcessCommandLine` that contained the string "tor-browser-windows-x86_64-portable-14.0.7.exe". Based on the logs returned, at `2025-03-08T19:26:59.3952232Z`, an employee on the "threat-hunt-gsl" device ran the file 'tor-browser-windows-x86_64-portable-14.0.7.exe' from their Downloads folder, using a command that triggered a silent installation.
+Several bad actor have been discovered attempting to login into the Target machine.
 
 **Query used to locate event:**
 
 ```kql
-
-DeviceProcessEvents  
-| where DeviceName == "threat-hunt-gsl"  
-| where ProcessCommandLine contains "tor-browser-windows-x86_64-portable-14.0.7.exe"  
-| project Timestamp, DeviceName, AccountName, ActionType, FileName, FolderPath, SHA256, ProcessCommandLine
+DeviceLogonEvents
+|where DeviceName == "windows-target-1"
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonFailed"
+| where isnotempty(RemoteIP)
+| summarize Attempts = count() by ActionType, RemoteIP, DeviceName
+| order by Attempts
 ```
-<img width="1212" alt="image" src="Screenshot 2025-03-08 173554.png">
+<img width="1212" alt="image" src="Screenshot 2025-03-10 141537.png">
 
 ---
 
-### 3. Searched the `DeviceProcessEvents` Table for TOR Browser Execution
+### 3. Check if any of the bad actor where able to login
 
-Searched for any indication that user "labuser" actually opened the TOR browser. There was evidence that they did open it at `2025-03-08T19:37:03.5825892Z`. There were several other instances of `firefox.exe` (TOR) as well as `tor.exe` spawned afterwards.
+The top 10 most failed login attempts IP addresses have not been able to successfully break into the VM
 
 **Query used to locate events:**
 
 ```kql
-DeviceProcessEvents  
-| where DeviceName == "threat-hunt-gsl"  
-| where FileName has_any ("tor.exe", "firefox.exe", "tor-browser.exe")  
-| project Timestamp, DeviceName, AccountName, ActionType, FileName, FolderPath, SHA256, ProcessCommandLine  
-| order by Timestamp desc
+let RemoteIPsInQuestion = dynamic(["128.1.44.9", "178.20.129.235", "83.118.125.238", "106.246.239.179", "85.215.149.156", "146.196.63.17", "89.232.41.74", "190.5.100.193", "178.176.229.228"]);
+DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonSuccess"
+| where RemoteIP has_any(RemoteIPsInQuestion)
+
 ```
-<img width="1212" alt="image" src="Screenshot 2025-03-08 174728.png">
+<img width="1212" alt="image" src="Screenshot 2025-03-10 143007.png">
 
 ---
 
