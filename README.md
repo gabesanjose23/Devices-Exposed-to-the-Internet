@@ -66,28 +66,58 @@ DeviceLogonEvents
 | where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
 | where ActionType == "LogonSuccess"
 | where RemoteIP has_any(RemoteIPsInQuestion)
-
 ```
 <img width="1212" alt="image" src="Screenshot 2025-03-10 143007.png">
 
 ---
 
-### 4. Searched the `DeviceNetworkEvents` Table for TOR Network Connections
+### 4. Check who dose have access to the account
 
-Searched for any indication the TOR browser was used to establish a connection using any of the known TOR ports. At `2025-03-08T19:38:13.127864Z`, an employee on the "threat-hunt-gsl" device successfully established a connection to the remote IP address `127.0.0.1` on port `9150`. The connection was initiated by the process `tor.exe`, located in the folder `c:\users\labuser\desktop\tor browser\browser\torbrowser\tor\tor.exe`. There were a couple of other connections to sites over port `443`.
+The only successful remote/network logons in the last 7 days was for the ‘labuser’ account (6 total)
 
 **Query used to locate events:**
 
 ```kql
-DeviceNetworkEvents  
-| where DeviceName == "threat-hunt-gsl"  
-| where InitiatingProcessAccountName != "system"  
-| where InitiatingProcessFileName in ("tor.exe", "firefox.exe")  
-| where RemotePort in ("9001", "9030", "9040", "9050", "9051", "9150", "80", "443")  
-| project Timestamp, DeviceName, InitiatingProcessAccountName, ActionType, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName, InitiatingProcessFolderPath  
-| order by Timestamp desc
+DeviceLogonEvents
+| where LogonType =="Network"
+| where ActionType == "LogonSuccess"
+|where DeviceName =="windows-target-1"
+|where AccountName == ”labuser”
 ```
-<img width="1212" alt="image" src="Screenshot 2025-03-08 175554.png">
+<img width="1212" alt="image" src="Screenshot 2025-03-10 145153.png">
+
+---
+### 5. Check if labuser has any suspicious failed login attemps 
+
+There were (0) failed logons for the ‘labuser’ account,indicating that a brute force attempts for this account didn’t take place,and a 1-time password guess is unlikely.
+
+**Query used to locate events:**
+
+```kql
+DeviceLogonEvents
+| where LogonType =="Network"
+| where ActionType == "LogonFailed"
+|where DeviceName =="windows-target-1"
+|where AccountName == "labuser"
+```
+<img width="1212" alt="image" src="Screenshot 2025-03-10 145659.png">
+
+---
+
+### 6. Check if the location from which is being logon from is normal
+
+We checked all of the successful login IP addresses for the “labuser” account to see if any of them were unusual or from an unexpected location,All were normal.
+**Query used to locate events:**
+
+```kql
+DeviceLogonEvents
+| where LogonType =="Network"
+| where ActionType == "LogonSuccess" 
+|where DeviceName =="windows-target-1"
+|where AccountName == "labuser"
+| summarize loginCount = count() by DeviceName,ActionType,AccountName,RemoteIP
+```
+<img width="1212" alt="image" src="Screenshot 2025-03-10 150405.png">
 
 ---
 
