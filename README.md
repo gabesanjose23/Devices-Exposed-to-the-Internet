@@ -20,7 +20,8 @@ During the time the devices were unknowingly exposed to the internet, it’s pos
 
 ### 1. Find out how long it's been exposed to the internet 
 
-Windows-target-1 has been internet facing for several days:
+Windows-target-1 has been internet facing for several days.Last internet facing time: 2025-03-10T18:28:06.2983018Z
+
 **Query used to locate events:**
 
 ```kql
@@ -34,7 +35,7 @@ DeviceInfo
 
 ---
 
-### 2. Searched the `DeviceProcessEvents` Table
+### 2. Find out how many people attempted to login into the machine
 
 Searched for any `ProcessCommandLine` that contained the string "tor-browser-windows-x86_64-portable-14.0.7.exe". Based on the logs returned, at `2025-03-08T19:26:59.3952232Z`, an employee on the "threat-hunt-gsl" device ran the file 'tor-browser-windows-x86_64-portable-14.0.7.exe' from their Downloads folder, using a command that triggered a silent installation.
 
@@ -87,57 +88,25 @@ DeviceNetworkEvents
 
 ---
 
-## Chronological Event Timeline 
-
-### 1. File Download - TOR Installer
-
-- **Timestamp:** `2025-03-08T19:18:55.4309325Z`
-- **Event:** The user "labuser" downloaded a file named `tor-browser-windows-x86_64-portable-14.0.1.exe` to the Downloads folder.
-- **Action:** File download detected.
-- **File Path:** `C:\Users\labuser\Downloads\tor-browser-windows-x86_64-portable-14.0.1.exe`
-
-### 2. Process Execution - TOR Browser Installation
-
-- **Timestamp:** `2025-03-08T19:26:59.3952232Z`
-- **Event:** The user "labuser" executed the file `tor-browser-windows-x86_64-portable-14.0.7.exe` in silent mode, initiating a background installation of the TOR Browser.
-- **Action:** Process creation detected.
-- **Command:** `tor-browser-windows-x86_64-portable-14.0.7.exe /S`
-- **File Path:** `C:\Users\labuser\Downloads\tor-browser-windows-x86_64-portable-14.0.7.exe`
-
-### 3. Process Execution - TOR Browser Launch
-
-- **Timestamp:** `2025-03-08T19:37:03.5825892Z`
-- **Event:** User "labuser" opened the TOR browser. Subsequent processes associated with TOR browser, such as `firefox.exe` and `tor.exe`, were also created, indicating that the browser launched successfully.
-- **Action:** Process creation of TOR browser-related executables detected.
-- **File Path:** `C:\Users\labuser\Desktop\Tor Browser\Browser\TorBrowser\Tor\tor.exe`
-
-### 4. Network Connection - TOR Network
-
-- **Timestamp:** `2025-03-08T19:38:13.127864Z`
-- **Event:** A network connection to IP `127.0.0.1` on port `9150` by user "labuser" was established using `tor.exe`, confirming TOR browser network activity.
-- **Action:** Connection success.
-- **Process:** `tor.exe`
-- **File Path:** `c:\users\labuser\desktop\tor browser\browser\torbrowser\tor\tor.exe`
-
-### 5. Additional Network Connections - TOR Browser Activity
-
-- **Timestamps:**
-  - `2025-03-08T19:37:20.3456954Z` - Connected to `85.23.104.222` on port `443`.
-  - `2025-03-08T19:38:13.127864Z` - Local connection to `127.0.0.1` on port `9150`.
-- **Event:** Additional TOR network connections were established, indicating ongoing activity by user "labuser" through the TOR browser.
-- **Action:** Multiple successful connections detected.
-
-
----
-
 ## Summary
 
-The user "labuser" on the "threat-hunt-gsl" device initiated and completed the installation of the TOR browser. They proceeded to launch the browser, establish connections within the TOR network, and created various files related to TOR on their desktop, including a file named `tor-shopping-list.txt`. This sequence of activities indicates that the user actively installed, configured, and used the TOR browser, likely for anonymous browsing purposes, with possible documentation in the form of the "shopping list" file.
+Though the device was exposed to the internet and clear brute force attempts have taken place, there is no evidence of any brute force success or unauthorized access from the legitimate account “labuser”
+
+MITRE ATT&CK - T1190: Exploit Public-Facing Application
+
+MITRE ATT&CK - T1078: Valid Accounts
+
+MITRE ATT&CK - T1110: Brute Force
 
 ---
 
-## Response Taken
+## Response Action
 
-TOR usage was confirmed on the endpoint `threat-hunt-gsl` by the user `labuser`. The device was isolated, and the user's direct manager was notified.
+--Hardened the NSG attached to “windows-target-1” to allow only RDP traffic from specific end-points(no public internet access)
+
+--Implemented account lockout policy
+
+--Implement MFA
+
 
 ---
